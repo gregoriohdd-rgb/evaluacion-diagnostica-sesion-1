@@ -168,6 +168,9 @@
         }
         .error-form { color: var(--mal); font-weight: bold; }
         input.oculto { display: none; }
+        details { margin-top: 16px; }
+        summary { cursor: pointer; font-weight: bold; color: var(--tinta); }
+        .enlace-resultados { display: inline-block; margin-top: 8px; color: var(--azul); }
     </style>
 </head>
 <body>
@@ -175,10 +178,7 @@
     <div class="subtitle">Introducción al entorno digital y procesamiento de textos (Nivel Básico)</div>
 
     <div class="instructions">
-        <strong>Instrucciones:</strong> Escribe tu nombre o un código y selecciona una respuesta en cada pregunta. Al enviar, verás tu puntaje. Las respuestas de este navegador se reúnen en el archivo fijo <strong>resultados-sesion-1.json</strong>.
-    </div>
-    <div class="nota">
-        Este navegador conserva lo que se envía aquí. Para llevarte una copia o abrirla en otra computadora, usa <strong>Guardar archivo fijo</strong> y, si hace falta, <strong>Cargar archivo fijo</strong>. Si ese archivo se vuelve a publicar en GitHub, esta página también mostrará esos resultados.
+        <strong>Instrucciones:</strong> Escribe tu nombre o un código y selecciona una respuesta en cada pregunta. Al pulsar <strong>Enviar evaluación</strong>, tu puntaje aparece en Resultados.
     </div>
 
     <form id="examen">
@@ -194,19 +194,24 @@
         </div>
     </form>
 
-    <div id="resultado-personal" class="resultado" hidden></div>
-
     <section class="panel" id="resultados">
-        <h2>Resultados del grupo</h2>
-        <div class="barra-botones">
-            <button type="button" id="guardar">Guardar archivo fijo</button>
-            <label class="archivo-btn">
-                Cargar archivo fijo
-                <input id="cargar" class="oculto" type="file" accept="application/json,.json">
-            </label>
-            <button type="button" class="peligro" id="borrar">Borrar resultados guardados</button>
+        <h2>Resultados</h2>
+        <div id="resultado-personal" class="resultado">
+            <p class="vacio">Tu puntaje aparecerá aquí cuando pulses <strong>Enviar evaluación</strong>.</p>
         </div>
+        <h2>Resultados del grupo</h2>
         <div id="resumen"></div>
+        <details>
+            <summary>Guardar o cargar el archivo de respuestas</summary>
+            <div class="barra-botones">
+                <button type="button" id="guardar">Guardar archivo fijo</button>
+                <label class="archivo-btn">
+                    Cargar archivo fijo
+                    <input id="cargar" class="oculto" type="file" accept="application/json,.json">
+                </label>
+                <button type="button" class="peligro" id="borrar">Borrar resultados guardados</button>
+            </div>
+        </details>
     </section>
 
     <script>
@@ -406,15 +411,11 @@
         }
 
         function pintarResumen(envios) {
-            if (!envios.length) {
-                resumenEl.innerHTML = `<p class="vacio">Aún no hay respuestas en este navegador ni en el archivo publicado.</p>`;
-                return;
-            }
             const total = envios.length;
             const suma = envios.reduce((acum, item) => acum + item.puntaje, 0);
-            const promedio = (suma / total).toFixed(1);
+            const promedio = total ? (suma / total).toFixed(1) : "—";
             const logrados = envios.filter((item) => item.puntaje >= 8).length;
-            const filas = envios.map((item) => `
+            const filas = total ? envios.map((item) => `
                 <tr>
                     <td>${escapar(item.nombre)}</td>
                     <td>${new Date(item.fecha).toLocaleString("es")}</td>
@@ -422,10 +423,10 @@
                     <td>${nivel(item.puntaje)}</td>
                     <td><button type="button" class="peligro" data-quitar="${escapar(item.id)}">Quitar</button></td>
                 </tr>
-            `).join("");
+            `).join("") : `<tr><td colspan="5">Todavía no hay envíos. Cuando alguien pulse Enviar evaluación, su nombre y puntaje aparecerán en esta tabla.</td></tr>`;
             const porPregunta = PREGUNTAS.map((pregunta, indice) => {
                 const aciertos = envios.filter((item) => item.respuestas[indice] === pregunta.correcta).length;
-                const porcentaje = Math.round((aciertos / total) * 100);
+                const porcentaje = total ? Math.round((aciertos / total) * 100) : 0;
                 return `
                     <div class="pregunta-resumen">
                         <div>${indice + 1}. ${aciertos} de ${total} aciertos (${porcentaje}%)</div>
@@ -448,10 +449,12 @@
                 </table>
                 <h3>Aciertos por pregunta</h3>
                 ${porPregunta}
-                <div class="clave">
-                    <h3>Clave de respuestas (uso del instructor)</h3>
-                    <div class="answer-grid">${clave}</div>
-                </div>
+                <details>
+                    <summary>Clave de respuestas (uso del instructor)</summary>
+                    <div class="clave">
+                        <div class="answer-grid">${clave}</div>
+                    </div>
+                </details>
             `;
         }
 
@@ -519,7 +522,9 @@
 
         document.getElementById("limpiar").addEventListener("click", () => {
             form.reset();
-            personalEl.hidden = true;
+            personalEl.hidden = false;
+            personalEl.className = "resultado";
+            personalEl.innerHTML = `<p class="vacio">Tu puntaje aparecerá aquí cuando pulses <strong>Enviar evaluación</strong>.</p>`;
             errorEl.hidden = true;
         });
 
