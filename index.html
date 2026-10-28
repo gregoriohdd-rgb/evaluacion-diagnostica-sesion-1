@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Evaluación de Entrada - Sesión 1</title>
+    <style>
+        :root {
+            --azul: #3498db;
+            --tinta: #2c3e50;
+            --fondo: #f4f7f8;
+            --ok: #1e8449;
+            --mal: #c0392b;
+        }
+        * { box-sizing: border-box; }
+        body {
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            max-width: 860px;
+            margin: 0 auto;
+            padding: 30px 20px 60px;
+            color: #333;
+            background: var(--fondo);
+        }
+        h1 {
+            color: var(--tinta);
+            text-align: center;
+            border-bottom: 2px solid var(--azul);
+            padding-bottom: 10px;
+            margin-bottom: 8px;
+        }
+        .subtitle {
+            text-align: center;
+            font-size: 1.15em;
+            color: #7f8c8d;
+            margin-bottom: 24px;
+        }
+        .instructions, .nota, .resultado, .panel {
+            background: #fff;
+            padding: 16px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .instructions {
+            background: #e8f4f8;
+            border-left: 5px solid var(--azul);
+        }
+        .nota {
+            background: #fff8e8;
+            border-left: 5px solid #f0b429;
+            font-size: 0.95em;
+        }
+        label.campo {
+            display: block;
+            font-weight: bold;
+            color: var(--tinta);
+            margin-bottom: 8px;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #d0d7de;
+            border-radius: 6px;
+            font: inherit;
+        }
+        .question-container {
+            background: #fff;
+            padding: 20px;
+            margin-bottom: 16px;
+            border-radius: 8px;
+            border: 1px solid #eee;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.04);
+        }
+        .question-text {
+            font-weight: bold;
+            margin-bottom: 12px;
+            font-size: 1.05em;
+            color: var(--tinta);
+        }
+        .options { list-style: none; padding: 0; margin: 0; }
+        .options li { margin-bottom: 8px; }
+        .options label {
+            display: flex;
+            gap: 10px;
+            align-items: flex-start;
+            padding: 10px;
+            background: #f9f9f9;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .options label:hover { background: #f0f7fa; }
+        .options input { margin-top: 4px; }
+        .acciones, .barra-botones {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 16px 0 28px;
+        }
+        button, .archivo-btn {
+            font: inherit;
+            border: 0;
+            border-radius: 6px;
+            padding: 10px 16px;
+            cursor: pointer;
+            background: var(--azul);
+            color: #fff;
+        }
+        button.secundario, .archivo-btn { background: #5d6d7e; }
+        button.peligro { background: var(--mal); }
+        button:disabled { opacity: 0.6; cursor: not-allowed; }
+        .resultado { border-left: 5px solid var(--ok); }
+        .resultado.bajo { border-left-color: var(--mal); }
+        .resultado.medio { border-left-color: #d68910; }
+        .puntaje {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: var(--tinta);
+            margin: 0 0 6px;
+        }
+        .detalle-item { padding: 6px 0; border-bottom: 1px solid #eee; }
+        .bien { color: var(--ok); }
+        .falla { color: var(--mal); }
+        .metricas {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+        .metrica {
+            background: #f7fbfe;
+            border: 1px solid #e1eef6;
+            border-radius: 8px;
+            padding: 12px;
+        }
+        .metrica span { display: block; color: #7f8c8d; font-size: 0.85em; }
+        .metrica strong { font-size: 1.4em; color: var(--tinta); }
+        table { width: 100%; border-collapse: collapse; font-size: 0.95em; }
+        th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid #eee; vertical-align: middle; }
+        th { color: var(--tinta); }
+        .bar {
+            height: 10px;
+            background: #e8eef2;
+            border-radius: 99px;
+            overflow: hidden;
+            margin-top: 4px;
+        }
+        .bar > i {
+            display: block;
+            height: 100%;
+            background: var(--azul);
+            width: 0;
+        }
+        .pregunta-resumen { margin-bottom: 12px; }
+        .vacio { color: #7f8c8d; }
+        .clave {
+            margin-top: 18px;
+            padding: 14px;
+            background: #fff3ef;
+            border: 1px dashed #e74c3c;
+            border-radius: 8px;
+        }
+        .clave h3 { color: var(--mal); margin: 0 0 8px; }
+        .answer-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 6px 10px;
+        }
+        .error-form { color: var(--mal); font-weight: bold; }
+        input.oculto { display: none; }
+    </style>
+</head>
+<body>
+    <h1>Evaluación de Entrada - Sesión 1</h1>
+    <div class="subtitle">Introducción al entorno digital y procesamiento de textos (Nivel Básico)</div>
+
+    <div class="instructions">
+        <strong>Instrucciones:</strong> Escribe tu nombre o un código y selecciona una respuesta en cada pregunta. Al enviar, verás tu puntaje. Las respuestas de este navegador se reúnen en el archivo fijo <strong>resultados-sesion-1.json</strong>.
+    </div>
+    <div class="nota">
+        Este navegador conserva lo que se envía aquí. Para llevarte una copia o abrirla en otra computadora, usa <strong>Guardar archivo fijo</strong> y, si hace falta, <strong>Cargar archivo fijo</strong>. Si ese archivo se vuelve a publicar en GitHub, esta página también mostrará esos resultados.
+    </div>
+
+    <form id="examen">
+        <div class="question-container">
+            <label class="campo" for="nombre">Nombre o código del participante</label>
+            <input id="nombre" name="nombre" type="text" maxlength="80" autocomplete="name" required>
+        </div>
+        <div id="preguntas"></div>
+        <p id="error" class="error-form" hidden></p>
+        <div class="acciones">
+            <button type="submit" id="enviar">Enviar evaluación</button>
+            <button type="button" class="secundario" id="limpiar">Limpiar formulario</button>
+        </div>
+    </form>
+
+    <div id="resultado-personal" class="resultado" hidden></div>
+
+    <section class="panel" id="resultados">
+        <h2>Resultados del grupo</h2>
+        <div class="barra-botones">
+            <button type="button" id="guardar">Guardar archivo fijo</button>
+            <label class="archivo-btn">
+                Cargar archivo fijo
+                <input id="cargar" class="oculto" type="file" accept="application/json,.json">
+            </label>
+            <button type="button" class="peligro" id="borrar">Borrar resultados guardados</button>
+        </div>
+        <div id="resumen"></div>
+    </section>
+
+    <script>
+        const ARCHIVO = "resultados-sesion-1.json";
+        const STORAGE_KEY = "evaluacion-sesion-1-envios-v1";
+        const PREGUNTAS = [
+            {
+                texto: "¿Cuál es la principal diferencia entre la ofimática tradicional y la ofimática moderna en la nube?",
+                correcta: "b",
+                opciones: {
+                    a: "La moderna no permite imprimir documentos físicos.",
+                    b: "La moderna guarda los archivos en servidores de internet, facilitando el acceso desde cualquier lugar y el trabajo colaborativo.",
+                    c: "La moderna solo funciona en computadoras sin conexión a internet.",
+                    d: "No existe diferencia, ambas requieren instalación mediante CD."
+                }
+            },
+            {
+                texto: "Al utilizar herramientas como Google Drive o OneDrive en tu computadora, ¿qué significa el proceso de 'sincronización'?",
+                correcta: "a",
+                opciones: {
+                    a: "Que los archivos de tu disco duro se copian y mantienen actualizados en la nube de forma automática al tener internet.",
+                    b: "Que el programa elimina los archivos antiguos de tu PC para ahorrar espacio en la nube.",
+                    c: "Que tu computadora se apaga automáticamente al terminar de subir un archivo.",
+                    d: "Que los documentos se traducen a otros idiomas sin tu permiso."
+                }
+            },
+            {
+                texto: "Si configuras un archivo de tu carpeta de OneDrive o Google Drive como 'Solo en la nube' (Online-only), ¿qué ocurre si intentas abrirlo sin conexión a internet?",
+                correcta: "c",
+                opciones: {
+                    a: "Se abre normalmente pero no puedes guardar los cambios.",
+                    b: "El archivo se borra permanentemente por seguridad.",
+                    c: "No podrás abrir el archivo hasta que vuelvas a conectarte a internet.",
+                    d: "El archivo se descarga automáticamente como imagen."
+                }
+            },
+            {
+                texto: "¿Cuál de las siguientes opciones es un procesador de textos que permite la coautoría y edición colaborativa en tiempo real?",
+                correcta: "b",
+                opciones: {
+                    a: "Microsoft Paint",
+                    b: "Google Docs",
+                    c: "Bloc de notas de Windows",
+                    d: "Calculadora de Windows"
+                }
+            },
+            {
+                texto: "Estás redactando un informe en Word o Google Docs y necesitas listar los requisitos de un proyecto. ¿Qué herramienta de formato es la más adecuada?",
+                correcta: "b",
+                opciones: {
+                    a: "Resaltado de texto en color amarillo",
+                    b: "Numeración o Viñetas",
+                    c: "Aumentar el tamaño de la letra a 24pt",
+                    d: "Subrayado y texto centrado"
+                }
+            },
+            {
+                texto: "Al elaborar un documento, necesitas mostrar un cronograma de actividades organizado en filas y columnas. ¿Qué elemento gráfico debes insertar?",
+                correcta: "c",
+                opciones: {
+                    a: "Un gráfico circular o de pastel",
+                    b: "Un salto de sección",
+                    c: "Una tabla",
+                    d: "Un video de YouTube"
+                }
+            },
+            {
+                texto: "¿Cuál es la forma más rápida, estructurada y profesional de organizar los títulos y subtítulos de un documento extenso?",
+                correcta: "b",
+                opciones: {
+                    a: "Poniendo todo el texto en mayúsculas y negrita manualmente.",
+                    b: "Utilizando la herramienta de 'Estilos' predeterminados (Título 1, Título 2, etc.).",
+                    c: "Cambiando el tipo de fuente y color al azar en cada página.",
+                    d: "Centrando el texto usando repetidamente la barra espaciadora."
+                }
+            },
+            {
+                texto: "¿Cuál de los siguientes es un ejemplo de un asistente de Inteligencia Artificial que puede ayudarte a generar el borrador de un oficio o informe?",
+                correcta: "a",
+                opciones: {
+                    a: "Gemini o ChatGPT",
+                    b: "Papelera de reciclaje",
+                    c: "OneDrive",
+                    d: "Panel de Control"
+                }
+            },
+            {
+                texto: "Le has pedido a una Inteligencia Artificial que redacte un memorando formal para tu equipo. ¿Cuál es la mejor práctica antes de enviarlo o imprimirlo?",
+                correcta: "b",
+                opciones: {
+                    a: "Copiar y pegar el texto tal cual, ya que la IA es infalible.",
+                    b: "Revisar, adaptar el tono a la institución y verificar que los datos inventados por la IA sean corregidos o confirmados.",
+                    c: "Eliminar el texto porque la IA no sirve para entornos laborales.",
+                    d: "Enviar el documento e incluir una nota diciendo que tú no lo escribiste."
+                }
+            },
+            {
+                texto: "Para organizar correctamente tus archivos locales y en la nube (como se indica en las buenas prácticas), ¿qué acción es recomendada?",
+                correcta: "c",
+                opciones: {
+                    a: "Guardar absolutamente todo en el Escritorio para tenerlo a la mano.",
+                    b: "Nombrar todos tus archivos como 'Doc1', 'Doc2' o 'Final'.",
+                    c: "Crear una estructura jerárquica de carpetas y nombrar los archivos usando fechas (ej. 2026-10-28_Reporte).",
+                    d: "Nunca borrar la carpeta de Descargas."
+                }
+            }
+        ];
+
+        const preguntasEl = document.getElementById("preguntas");
+        const form = document.getElementById("examen");
+        const errorEl = document.getElementById("error");
+        const personalEl = document.getElementById("resultado-personal");
+        const resumenEl = document.getElementById("resumen");
+
+        function nivel(puntaje) {
+            if (puntaje >= 8) return "Logrado";
+            if (puntaje >= 5) return "En proceso";
+            return "Inicial";
+        }
+
+        function escapar(texto) {
+            return String(texto)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;");
+        }
+
+        function leerLocal() {
+            try {
+                const datos = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+                return Array.isArray(datos) ? datos : [];
+            } catch (error) {
+                return [];
+            }
+        }
+
+        function guardarLocal(envios) {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(envios));
+        }
+
+        function unir(base, extra) {
+            const ids = new Set(base.map((item) => item.id));
+            extra.forEach((item) => {
+                if (item && item.id && !ids.has(item.id)) {
+                    base.push(item);
+                    ids.add(item.id);
+                }
+            });
+            base.sort((a, b) => String(a.fecha).localeCompare(String(b.fecha)));
+            return base;
+        }
+
+        function pintarPreguntas() {
+            preguntasEl.innerHTML = PREGUNTAS.map((pregunta, indice) => {
+                const opciones = Object.entries(pregunta.opciones).map(([letra, texto]) => `
+                    <li>
+                        <label>
+                            <input type="radio" name="q${indice}" value="${letra}" required>
+                            <span><strong>${letra})</strong> ${escapar(texto)}</span>
+                        </label>
+                    </li>
+                `).join("");
+                return `
+                    <fieldset class="question-container">
+                        <legend class="question-text">${indice + 1}. ${escapar(pregunta.texto)}</legend>
+                        <ul class="options">${opciones}</ul>
+                    </fieldset>
+                `;
+            }).join("");
+        }
+
+        function archivoDe(envios) {
+            return {
+                evaluacion: "Evaluación de Entrada - Sesión 1",
+                archivo: ARCHIVO,
+                actualizado: new Date().toISOString(),
+                envios
+            };
+        }
+
+        function pintarPersonal(envio) {
+            const clase = envio.puntaje >= 8 ? "" : envio.puntaje >= 5 ? "medio" : "bajo";
+            const detalle = envio.respuestas.map((elegida, indice) => {
+                const pregunta = PREGUNTAS[indice];
+                const bien = elegida === pregunta.correcta;
+                return `<div class="detalle-item ${bien ? "bien" : "falla"}">${indice + 1}. ${bien ? "Correcta" : "Incorrecta"} · marcada: ${elegida} · clave: ${pregunta.correcta}</div>`;
+            }).join("");
+            personalEl.hidden = false;
+            personalEl.className = `resultado ${clase}`;
+            personalEl.innerHTML = `
+                <p class="puntaje">${envio.puntaje} / ${envio.total}</p>
+                <p><strong>${escapar(envio.nombre)}</strong> · ${nivel(envio.puntaje)} · ${new Date(envio.fecha).toLocaleString("es")}</p>
+                ${detalle}
+            `;
+            personalEl.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+
+        function pintarResumen(envios) {
+            if (!envios.length) {
+                resumenEl.innerHTML = `<p class="vacio">Aún no hay respuestas en este navegador ni en el archivo publicado.</p>`;
+                return;
+            }
+            const total = envios.length;
+            const suma = envios.reduce((acum, item) => acum + item.puntaje, 0);
+            const promedio = (suma / total).toFixed(1);
+            const logrados = envios.filter((item) => item.puntaje >= 8).length;
+            const filas = envios.map((item) => `
+                <tr>
+                    <td>${escapar(item.nombre)}</td>
+                    <td>${new Date(item.fecha).toLocaleString("es")}</td>
+                    <td>${item.puntaje} / ${item.total}</td>
+                    <td>${nivel(item.puntaje)}</td>
+                    <td><button type="button" class="peligro" data-quitar="${escapar(item.id)}">Quitar</button></td>
+                </tr>
+            `).join("");
+            const porPregunta = PREGUNTAS.map((pregunta, indice) => {
+                const aciertos = envios.filter((item) => item.respuestas[indice] === pregunta.correcta).length;
+                const porcentaje = Math.round((aciertos / total) * 100);
+                return `
+                    <div class="pregunta-resumen">
+                        <div>${indice + 1}. ${aciertos} de ${total} aciertos (${porcentaje}%)</div>
+                        <div class="bar"><i style="width:${porcentaje}%"></i></div>
+                    </div>
+                `;
+            }).join("");
+            const clave = PREGUNTAS.map((pregunta, indice) => `<div><strong>Pregunta ${indice + 1}:</strong> ${pregunta.correcta}</div>`).join("");
+            resumenEl.innerHTML = `
+                <div class="metricas">
+                    <div class="metrica"><span>Participantes</span><strong>${total}</strong></div>
+                    <div class="metrica"><span>Promedio</span><strong>${promedio}</strong></div>
+                    <div class="metrica"><span>Logrado (8 o más)</span><strong>${logrados}</strong></div>
+                </div>
+                <table>
+                    <thead>
+                        <tr><th>Nombre</th><th>Fecha</th><th>Puntaje</th><th>Nivel</th><th></th></tr>
+                    </thead>
+                    <tbody>${filas}</tbody>
+                </table>
+                <h3>Aciertos por pregunta</h3>
+                ${porPregunta}
+                <div class="clave">
+                    <h3>Clave de respuestas (uso del instructor)</h3>
+                    <div class="answer-grid">${clave}</div>
+                </div>
+            `;
+        }
+
+        async function cargarTodo() {
+            let envios = leerLocal();
+            try {
+                const respuesta = await fetch(ARCHIVO, { cache: "no-store" });
+                if (respuesta.ok) {
+                    const datos = await respuesta.json();
+                    if (Array.isArray(datos.envios)) envios = unir(envios, datos.envios);
+                }
+            } catch (error) {
+                /* La página abierta como archivo local no puede leer el JSON vecino. */
+            }
+            guardarLocal(envios);
+            pintarResumen(envios);
+            return envios;
+        }
+
+        function descargar(envios) {
+            const blob = new Blob([JSON.stringify(archivoDe(envios), null, 2)], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            const enlace = document.createElement("a");
+            enlace.href = url;
+            enlace.download = ARCHIVO;
+            enlace.click();
+            URL.revokeObjectURL(url);
+        }
+
+        pintarPreguntas();
+        cargarTodo();
+
+        form.addEventListener("submit", (evento) => {
+            evento.preventDefault();
+            errorEl.hidden = true;
+            const nombre = document.getElementById("nombre").value.trim();
+            if (!nombre) {
+                errorEl.hidden = false;
+                errorEl.textContent = "Escribe el nombre o código del participante.";
+                return;
+            }
+            const respuestas = PREGUNTAS.map((_, indice) => {
+                const marcada = form.querySelector(`input[name="q${indice}"]:checked`);
+                return marcada ? marcada.value : "";
+            });
+            if (respuestas.some((valor) => !valor)) {
+                errorEl.hidden = false;
+                errorEl.textContent = "Selecciona una respuesta en todas las preguntas.";
+                return;
+            }
+            const puntaje = respuestas.reduce((acum, valor, indice) => acum + (valor === PREGUNTAS[indice].correcta ? 1 : 0), 0);
+            const envio = {
+                id: (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+                nombre,
+                fecha: new Date().toISOString(),
+                respuestas,
+                puntaje,
+                total: PREGUNTAS.length
+            };
+            const envios = unir(leerLocal(), [envio]);
+            guardarLocal(envios);
+            pintarPersonal(envio);
+            pintarResumen(envios);
+        });
+
+        document.getElementById("limpiar").addEventListener("click", () => {
+            form.reset();
+            personalEl.hidden = true;
+            errorEl.hidden = true;
+        });
+
+        document.getElementById("guardar").addEventListener("click", () => {
+            descargar(leerLocal());
+        });
+
+        document.getElementById("cargar").addEventListener("change", async (evento) => {
+            const archivo = evento.target.files && evento.target.files[0];
+            evento.target.value = "";
+            if (!archivo) return;
+            try {
+                const datos = JSON.parse(await archivo.text());
+                const lista = Array.isArray(datos) ? datos : datos.envios;
+                if (!Array.isArray(lista)) throw new Error("formato");
+                const envios = unir(leerLocal(), lista);
+                guardarLocal(envios);
+                pintarResumen(envios);
+            } catch (error) {
+                errorEl.hidden = false;
+                errorEl.textContent = "Ese archivo no tiene el formato de resultados-sesion-1.json.";
+            }
+        });
+
+        document.getElementById("borrar").addEventListener("click", () => {
+            if (!leerLocal().length) return;
+            if (!confirm("¿Borrar todas las respuestas guardadas en este navegador?")) return;
+            guardarLocal([]);
+            pintarResumen([]);
+        });
+
+        resumenEl.addEventListener("click", (evento) => {
+            const boton = evento.target.closest("[data-quitar]");
+            if (!boton) return;
+            const envios = leerLocal().filter((item) => item.id !== boton.dataset.quitar);
+            guardarLocal(envios);
+            pintarResumen(envios);
+        });
+    </script>
+</body>
+</html>
