@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Resultados del grupo - Sesión 1</title>
+    <link rel="stylesheet" href="estilos.css">
+</head>
+<body>
+    <h1>Resultados del grupo</h1>
+    <div class="subtitle">Uso del instructor · Evaluación de Entrada, Sesión 1</div>
+
+    <form id="acceso" class="panel">
+        <label class="campo" for="clave">Código de acceso</label>
+        <input id="clave" type="password" autocomplete="current-password" required>
+        <p id="error-clave" class="error-form" hidden>El código no coincide.</p>
+        <div class="acciones">
+            <button type="submit">Entrar</button>
+        </div>
+    </form>
+
+    <section id="panel" class="panel" hidden>
+        <p class="nota">Aquí ves el resumen de quienes enviaron la evaluación en este navegador, el porcentaje por pregunta y las alternativas correctas.</p>
+        <div class="barra-botones">
+            <button type="button" id="guardar">Guardar archivo fijo</button>
+            <label class="archivo-btn">
+                Cargar archivo fijo
+                <input id="cargar" class="oculto" type="file" accept="application/json,.json">
+            </label>
+            <button type="button" class="peligro" id="borrar">Borrar resultados guardados</button>
+        </div>
+        <p id="error-archivo" class="error-form" hidden></p>
+        <div id="resumen"></div>
+    </section>
+
+    <script src="evaluacion.js"></script>
+    <script>
+        const CODIGO = "Sesion1-docente";
+        const SESION = "evaluacion-sesion-1-acceso";
+        const acceso = document.getElementById("acceso");
+        const panel = document.getElementById("panel");
+        const resumenEl = document.getElementById("resumen");
+        const errorClave = document.getElementById("error-clave");
+
+        function pintar(envios) {
+            resumenEl.innerHTML = Evaluacion.htmlResumen(envios);
+        }
+
+        async function cargarTodo() {
+            let envios = Evaluacion.leerLocal();
+            try {
+                const respuesta = await fetch(Evaluacion.ARCHIVO, { cache: "no-store" });
+                if (respuesta.ok) {
+                    const datos = await respuesta.json();
+                    if (Array.isArray(datos.envios)) envios = Evaluacion.unir(envios, datos.envios);
+                }
+            } catch (error) {
+                /* Sin conexión al archivo publicado. */
+            }
+            Evaluacion.guardarLocal(envios);
+            pintar(envios);
+            return envios;
+        }
+
+        function abrirPanel() {
+            acceso.hidden = true;
+            panel.hidden = false;
+            sessionStorage.setItem(SESION, "1");
+            cargarTodo();
+        }
+
+        acceso.addEventListener("submit", (evento) => {
+            evento.preventDefault();
+            if (document.getElementById("clave").value !== CODIGO) {
+                errorClave.hidden = false;
+                return;
+            }
+            errorClave.hidden = true;
+            abrirPanel();
+        });
+
+        document.getElementById("guardar").addEventListener("click", () => {
+            const blob = new Blob([JSON.stringify(Evaluacion.archivoDe(Evaluacion.leerLocal()), null, 2)], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            const enlace = document.createElement("a");
+            enlace.href = url;
+            enlace.download = Evaluacion.ARCHIVO;
+            enlace.click();
+            URL.revokeObjectURL(url);
+        });
+
+        document.getElementById("cargar").addEventListener("change", async (evento) => {
+            const archivo = evento.target.files && evento.target.files[0];
+            evento.target.value = "";
+            if (!archivo) return;
+            const errorArchivo = document.getElementById("error-archivo");
+            try {
+                const datos = JSON.parse(await archivo.text());
+                const lista = Array.isArray(datos) ? datos : datos.envios;
+                if (!Array.isArray(lista)) throw new Error("formato");
+                const envios = Evaluacion.unir(Evaluacion.leerLocal(), lista);
+                Evaluacion.guardarLocal(envios);
+                errorArchivo.hidden = true;
+                pintar(envios);
+            } catch (error) {
+                errorArchivo.hidden = false;
+                errorArchivo.textContent = "Ese archivo no tiene el formato de resultados-sesion-1.json.";
+            }
+        });
+
+        document.getElementById("borrar").addEventListener("click", () => {
+            if (!Evaluacion.leerLocal().length) return;
+            if (!confirm("¿Borrar todas las respuestas guardadas en este navegador?")) return;
+            Evaluacion.guardarLocal([]);
+            pintar([]);
+        });
+
+        resumenEl.addEventListener("click", (evento) => {
+            const boton = evento.target.closest("[data-quitar]");
+            if (!boton) return;
+            const envios = Evaluacion.leerLocal().filter((item) => item.id !== boton.dataset.quitar);
+            Evaluacion.guardarLocal(envios);
+            pintar(envios);
+        });
+
+        if (sessionStorage.getItem(SESION) === "1") abrirPanel();
+    </script>
+</body>
+</html>
